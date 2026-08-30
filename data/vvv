@@ -1,1 +1,110 @@
-sing-box run -c /etc/sing-box/config.json
+cat > /etc/sing-box/config.json <<'EOF'
+{
+  "log": {
+    "level": "info"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "singtun0",
+      "address": [
+        "172.19.0.1/30"
+      ],
+      "auto_route": true,
+      "auto_redirect": true,
+      "strict_route": true,
+      "stack": "system",
+      "route_exclude_address": [
+        "192.168.1.0/24",
+        "192.168.2.0/24"
+      ]
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "vless",
+      "tag": "vless-1",
+      "server": "2.27.41.68",
+      "server_port": 443,
+      "uuid": "ccb7ffcf-3d18-43db-be33-e66e1b193cf3",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "addons.mozilla.org",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "firefox"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "Ny_08hNS3MFmwSqyEFFcSJP4QWWQn6Gl30cFTmkevCU"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vless-2",
+      "server": "144.31.171.53",
+      "server_port": 443,
+      "uuid": "ccb7ffcf-3d18-43db-be33-e66e1b193cf3",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "addons.mozilla.org",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "firefox"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "Ny_08hNS3MFmwSqyEFFcSJP4QWWQn6Gl30cFTmkevCU"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vless-3",
+      "server": "2.26.83.62",
+      "server_port": 443,
+      "uuid": "ccb7ffcf-3d18-43db-be33-e66e1b193cf3",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "addons.mozilla.org",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "firefox"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "Ny_08hNS3MFmwSqyEFFcSJP4QWWQn6Gl30cFTmkevCU"
+        }
+      }
+    },
+    {
+      "type": "urltest",
+      "tag": "auto",
+      "outbounds": [
+        "vless-1",
+        "vless-2",
+        "vless-3"
+      ],
+      "url": "https://www.gstatic.com/generate_204",
+      "interval": "3m",
+      "tolerance": 50
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "final": "auto"
+  }
+}
+EOF
