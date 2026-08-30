@@ -1,0 +1,18 @@
+services:
+  moderation-bot:
+    build: .
+    container_name: moderation-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      OLLAMA_HOST: "127.0.0.1:11434"
+      AI_URL: "http://127.0.0.1:11434/api/chat"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./moderation.db:/app/moderation.db
+
+volumes:
+  ollama_data:
