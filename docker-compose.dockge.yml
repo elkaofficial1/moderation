@@ -1,0 +1,70 @@
+services:
+  moderation-bot:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM ollama/ollama:latest
+
+        RUN apt-get update && \
+            apt-get install -y python3 python3-pip python3-venv curl git && \
+            rm -rf /var/lib/apt/lists/*
+
+        RUN git clone --depth 1 https://github.com/elkaofficial1/moderation.git /app
+
+        WORKDIR /app
+
+        RUN python3 -m venv /opt/venv && \
+            /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+
+        COPY <<'ENTRYPOINT' /entrypoint.sh
+        #!/bin/bash
+        set -e
+
+        echo "=== Starting Ollama ==="
+        ollama serve > /tmp/ollama.log 2>&1 &
+
+        echo "=== Waiting for Ollama ==="
+        until curl -sf http://127.0.0.1:11434/api/tags >/dev/null 2>&1; do
+            sleep 1
+        done
+
+        echo "=== Checking qwen2.5:3b ==="
+        if ! ollama list | grep -q '^qwen2.5:3b'; then
+            echo "=== Downloading qwen2.5:3b ==="
+            ollama pull qwen2.5:3b
+        else
+            echo "=== qwen2.5:3b already exists ==="
+        fi
+
+        echo "=== Starting Telegram bot ==="
+        exec /opt/venv/bin/python /app/bot.py
+        ENTRYPOINT
+
+        RUN chmod +x /entrypoint.sh
+
+        ENV PATH="/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        ENV OLLAMA_HOST="127.0.0.1:11434"
+        ENV AI_URL="http://127.0.0.1:11434/api/chat"
+
+        ENTRYPOINT ["/entrypoint.sh"]
+
+    container_name: moderation-bot
+    restart: unless-stopped
+
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      ADMIN_ID: ${ADMIN_ID}
+      AI_URL: http://127.0.0.1:11434/api/chat
+      AI_MODEL: qwen2.5:3b
+      MODE: ${MODE:-observe}
+      AUTO_BAN: ${AUTO_BAN:-true}
+
+    volumes:
+      - ollama_data:/root/.ollama
+      - moderation_data:/app/data
+      - moderation_db:/data
+
+volumes:
+  ollama_data:
+  moderation_data:
+  moderation_db:

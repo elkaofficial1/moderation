@@ -23,7 +23,7 @@ MODEL = os.getenv("AI_MODEL", "qwen2.5:3b")
 AUTO_BAN = os.getenv("AUTO_BAN", "true").lower() == "true"
 MODE = os.getenv("MODE", "observe")
 
-DB = "moderation.db"
+DB = "/data/moderation.db"
 TICKET_DAYS = 30
 
 bot = Bot(BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -134,21 +134,31 @@ def init_db():
             )
 
     # Copy data from the old schema into the new fields.
-    conn.execute("""
-        UPDATE tickets
-        SET text = COALESCE(NULLIF(text, ''), message, ''),
-            score = COALESCE(score, severity, 0),
-            created_at = CASE
-                WHEN created_at IS NULL OR created_at = 0
-                THEN CAST(strftime('%s', created) AS INTEGER)
-                ELSE created_at
-            END
-        WHERE
-            (text IS NULL OR text = '')
-            OR score IS NULL
-            OR created_at IS NULL
-            OR created_at = 0
-    """)
+    old_columns = {
+        row[1]
+        for row in conn.execute("PRAGMA table_info(tickets)").fetchall()
+    }
+
+    if "message" in old_columns:
+        conn.execute("""
+            UPDATE tickets
+            SET text = COALESCE(NULLIF(text, ''), message, '')
+            WHERE text IS NULL OR text = ''
+        """)
+
+    if "severity" in old_columns:
+        conn.execute("""
+            UPDATE tickets
+            SET score = COALESCE(score, severity, 0)
+            WHERE score IS NULL
+        """)
+
+    if "created" in old_columns:
+        conn.execute("""
+            UPDATE tickets
+            SET created_at = CAST(strftime('%s', created) AS INTEGER)
+            WHERE created_at IS NULL OR created_at = 0
+        """)
 
     conn.commit()
     conn.close()
