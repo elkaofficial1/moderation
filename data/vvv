@@ -1,1 +1,2 @@
-sing-box run -c /etc/sing-box/config.json
+sed -i '/"auto_redirect": true,/d; /"strict_route": true,/d' /etc/sing-box/config.json
+
