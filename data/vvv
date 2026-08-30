@@ -1,1 +1,2 @@
-sing-box check -c /etc/sing-box/config.json 2>&1
+sed -i '/"sniff": true,/d' /etc/sing-box/config.json
+sing-box check -c /etc/sing-box/config.json
