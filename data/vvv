@@ -1,0 +1,48 @@
+mkdir -p /etc/sing-box && cat > /etc/sing-box/config.json <<'EOF'
+{
+  "log": {
+    "level": "info"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "singtun0",
+      "address": [
+        "172.19.0.1/30"
+      ],
+      "auto_route": false,
+      "strict_route": false,
+      "stack": "system",
+      "sniff": true
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "vless",
+      "tag": "proxy",
+      "server": "2.27.41.68",
+      "server_port": 443,
+      "uuid": "ccb7ffcf-3d18-43db-be33-e66e1b193cf3",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "tls": {
+        "enabled": true,
+        "server_name": "addons.mozilla.org",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "firefox"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "Ny_08hNS3MFmwSqyEFFcSJP4QWWQn6Gl30cFTmkevCU"
+        }
+      }
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ]
+}
+EOF
